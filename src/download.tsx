@@ -166,14 +166,27 @@ function TrimForm({
 
           <Form.Separator />
 
-          <Form.Dropdown id="format" title="Format" defaultValue="video" onChange={setSelectedFormat}>
+          <Form.Dropdown
+            id="format"
+            title="Format"
+            defaultValue="video"
+            onChange={setSelectedFormat}
+          >
             <Form.Dropdown.Item value="video" title="Video — MP4" icon="🎬" />
-            <Form.Dropdown.Item value="audio" title="Audio only — MP3" icon="🎵" />
+            <Form.Dropdown.Item
+              value="audio"
+              title="Audio only — MP3"
+              icon="🎵"
+            />
           </Form.Dropdown>
 
           {selectedFormat === "video" && (
             <Form.Dropdown id="quality" title="Quality" defaultValue="best">
-              <Form.Dropdown.Item value="best" title="Best available" icon="⭐" />
+              <Form.Dropdown.Item
+                value="best"
+                title="Best available"
+                icon="⭐"
+              />
               <Form.Dropdown.Item value="2160" title="4K — 2160p" icon="🎥" />
               <Form.Dropdown.Item value="1080" title="1080p HD" icon="🎥" />
               <Form.Dropdown.Item value="720" title="720p HD" icon="📹" />
@@ -193,7 +206,6 @@ export default function Download() {
   const [searchText, setSearchText] = useState("");
   const [isFetching, setIsFetching] = useState(false);
   const [depsOk, setDepsOk] = useState<boolean | null>(null);
-  const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null);
   const { push, pop } = useNavigation();
 
   // Check deps on mount & try to read clipboard
@@ -243,7 +255,7 @@ export default function Download() {
             setSearchText("");
             pop();
           }}
-        />
+        />,
       );
     } catch (e) {
       toast.style = Toast.Style.Failure;
@@ -286,7 +298,7 @@ export default function Download() {
               <ActionPanel>
                 <Action.Open
                   title="Run Setup Command"
-                  target="raycast://extensions/dean/clipity/setup"
+                  target="raycast://extensions/deanfyi/clipity/setup"
                   icon={Icon.Gear}
                 />
               </ActionPanel>
@@ -301,7 +313,11 @@ export default function Download() {
           <List.Item
             icon={{ source: Icon.Download, tintColor: Color.Blue }}
             title="Fetch & trim video"
-            subtitle={searchText.length > 65 ? searchText.slice(0, 65) + "…" : searchText}
+            subtitle={
+              searchText.length > 65
+                ? searchText.slice(0, 65) + "…"
+                : searchText
+            }
             accessories={[{ text: "↵ to fetch" }]}
             actions={
               <ActionPanel>

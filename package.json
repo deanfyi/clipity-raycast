@@ -16,7 +16,7 @@
     },
     {
       "name": "setup",
-      "title": "Setup clipity",
+      "title": "Setup Clipity",
       "description": "Install yt-dlp and ffmpeg dependencies",
       "mode": "view"
     }

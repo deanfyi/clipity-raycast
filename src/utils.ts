@@ -43,7 +43,7 @@ export async function checkDeps(): Promise<DepsStatus> {
 
 export async function brewInstall(
   pkg: string,
-  onLine: (line: string) => void
+  onLine: (line: string) => void,
 ): Promise<void> {
   const brew = getBrewPath();
   if (!brew) throw new Error("Homebrew not found");
@@ -69,14 +69,19 @@ export async function brewInstall(
   await proc;
 }
 
-export async function installHomebrew(onLine: (line: string) => void): Promise<void> {
+export async function installHomebrew(
+  onLine: (line: string) => void,
+): Promise<void> {
   const proc = execa(
     "/bin/bash",
-    ["-c", "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"],
+    [
+      "-c",
+      "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)",
+    ],
     {
       env: { ...process.env, NONINTERACTIVE: "1", CI: "1" },
       all: true,
-    }
+    },
   );
 
   proc.all?.on("data", (chunk: Buffer) => {
@@ -102,7 +107,8 @@ export interface VideoInfo {
 
 export async function fetchVideoInfo(url: string): Promise<VideoInfo> {
   const ytdlp = getBinPath("yt-dlp");
-  if (!ytdlp) throw new Error("yt-dlp not installed. Run the Setup command first.");
+  if (!ytdlp)
+    throw new Error("yt-dlp not installed. Run the Setup command first.");
 
   const { stdout } = await execa(ytdlp, ["--dump-json", "--no-playlist", url], {
     env: {
@@ -153,10 +159,15 @@ export async function downloadVideo(opts: DownloadOptions): Promise<string> {
   if (opts.format === "audio") {
     args.push("-x", "--audio-format", "mp3", "--audio-quality", "0");
   } else {
-    const h = opts.quality && opts.quality !== "best" ? `[height<=${opts.quality}]` : "";
+    const h =
+      opts.quality && opts.quality !== "best"
+        ? `[height<=${opts.quality}]`
+        : "";
     args.push(
-      "-f", `bestvideo${h}[ext=mp4]+bestaudio[ext=m4a]/best${h}[ext=mp4]/best`,
-      "--merge-output-format", "mp4"
+      "-f",
+      `bestvideo${h}[ext=mp4]+bestaudio[ext=m4a]/best${h}[ext=mp4]/best`,
+      "--merge-output-format",
+      "mp4",
     );
   }
 
@@ -204,7 +215,8 @@ export function formatDuration(secs: number): string {
   const h = Math.floor(secs / 3600);
   const m = Math.floor((secs % 3600) / 60);
   const s = Math.floor(secs % 60);
-  if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  if (h > 0)
+    return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 

@@ -2,13 +2,10 @@ import {
   Action,
   ActionPanel,
   Color,
-  Detail,
   Icon,
   List,
   Toast,
   showToast,
-  openExtensionPreferences,
-  open,
 } from "@raycast/api";
 import { useEffect, useState } from "react";
 import { checkDeps, brewInstall, installHomebrew, DepsStatus } from "./utils";
@@ -51,7 +48,6 @@ function stepSubtitle(s: StepStatus): string {
 export default function Setup() {
   const [deps, setDeps] = useState<DepsStatus | null>(null);
   const [installing, setInstalling] = useState(false);
-  const [done, setDone] = useState(false);
   const [steps, setSteps] = useState<Steps>({
     brew: IDLE,
     ytdlp: IDLE,
@@ -69,7 +65,10 @@ export default function Setup() {
     setInstalling(true);
     setSteps({ brew: IDLE, ytdlp: IDLE, ffmpeg: IDLE });
 
-    const toast = await showToast({ style: Toast.Style.Animated, title: "Installing dependencies…" });
+    const toast = await showToast({
+      style: Toast.Style.Animated,
+      title: "Installing dependencies…",
+    });
 
     try {
       // ── Homebrew ──
@@ -87,7 +86,8 @@ export default function Setup() {
           upd("brew", { state: "error", log: String(e) });
           toast.style = Toast.Style.Failure;
           toast.title = "Homebrew install failed";
-          toast.message = "Try: /bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\"";
+          toast.message =
+            'Try: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"';
           setInstalling(false);
           return;
         }
@@ -116,7 +116,10 @@ export default function Setup() {
       if (freshDeps.ffmpeg) {
         upd("ffmpeg", { state: "skipped" });
       } else {
-        upd("ffmpeg", { state: "running", log: "Installing ffmpeg (takes a minute)…" });
+        upd("ffmpeg", {
+          state: "running",
+          log: "Installing ffmpeg (takes a minute)…",
+        });
         toast.message = "Installing ffmpeg…";
         try {
           await brewInstall("ffmpeg", (line) => upd("ffmpeg", { log: line }));
@@ -134,7 +137,6 @@ export default function Setup() {
       toast.style = Toast.Style.Success;
       toast.title = "All done!";
       toast.message = "clipity is ready to use";
-      setDone(true);
       setDeps(await checkDeps());
     } catch (e) {
       toast.style = Toast.Style.Failure;
@@ -191,8 +193,8 @@ export default function Setup() {
             deps.brew
               ? { state: "done", log: "" }
               : steps.brew.state !== "idle"
-              ? steps.brew
-              : { state: "idle", log: "" }
+                ? steps.brew
+                : { state: "idle", log: "" },
           )}
           title="Homebrew"
           subtitle={deps.brew ? "Already installed" : stepSubtitle(steps.brew)}
@@ -219,23 +221,23 @@ export default function Setup() {
             deps.ytdlp
               ? { state: "done", log: "" }
               : steps.ytdlp.state !== "idle"
-              ? steps.ytdlp
-              : { state: "idle", log: "" }
+                ? steps.ytdlp
+                : { state: "idle", log: "" },
           )}
           title="yt-dlp"
           subtitle={
             deps.ytdlp
               ? "Already installed"
               : installing && steps.ytdlp.state === "running"
-              ? steps.ytdlp.log
-              : "Downloads videos from 1000+ sites"
+                ? steps.ytdlp.log
+                : "Downloads videos from 1000+ sites"
           }
           accessories={[{ text: deps.ytdlp ? "✓" : "Missing" }]}
           actions={
             !deps.ytdlp ? (
               <ActionPanel>
                 <Action
-                  title="Install yt-dlp"
+                  title="Install Yt-dlp"
                   icon={Icon.Download}
                   onAction={() => installSingle("yt-dlp")}
                 />
@@ -254,23 +256,23 @@ export default function Setup() {
             deps.ffmpeg
               ? { state: "done", log: "" }
               : steps.ffmpeg.state !== "idle"
-              ? steps.ffmpeg
-              : { state: "idle", log: "" }
+                ? steps.ffmpeg
+                : { state: "idle", log: "" },
           )}
           title="ffmpeg"
           subtitle={
             deps.ffmpeg
               ? "Already installed"
               : installing && steps.ffmpeg.state === "running"
-              ? steps.ffmpeg.log
-              : "Handles video trimming & conversion"
+                ? steps.ffmpeg.log
+                : "Handles video trimming & conversion"
           }
           accessories={[{ text: deps.ffmpeg ? "✓" : "Missing" }]}
           actions={
             !deps.ffmpeg ? (
               <ActionPanel>
                 <Action
-                  title="Install ffmpeg"
+                  title="Install Ffmpeg"
                   icon={Icon.Download}
                   onAction={() => installSingle("ffmpeg")}
                 />
@@ -313,7 +315,7 @@ export default function Setup() {
               <ActionPanel>
                 <Action.Open
                   title="Open Download Command"
-                  target="raycast://extensions/dean/clipity/download"
+                  target="raycast://extensions/deanfyi/clipity/download"
                 />
               </ActionPanel>
             }
@@ -330,10 +332,7 @@ export default function Setup() {
                 title="Copy Command"
                 content="brew install yt-dlp ffmpeg"
               />
-              <Action.Open
-                title="Open Terminal"
-                target="terminal://"
-              />
+              <Action.Open title="Open Terminal" target="terminal://" />
             </ActionPanel>
           }
         />
