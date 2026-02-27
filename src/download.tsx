@@ -7,28 +7,39 @@ import {
   List,
   Toast,
   showToast,
-  showHUD,
   open,
   Clipboard,
   useNavigation,
 } from "@raycast/api";
 import { useEffect, useState } from "react";
+import { homedir } from "os";
+import { join } from "path";
 import {
   checkDeps,
   fetchVideoInfo,
   downloadVideo,
   formatDuration,
   parseTimeToSeconds,
-  secondsToTimestamp,
   VideoInfo,
 } from "./utils";
 
+const DOWNLOADS_DIR = join(homedir(), "Downloads", "clipity");
+
 // ─── Trim & Download Form ─────────────────────────────────────────────────────
 
-function TrimForm({ info, onBack }: { info: VideoInfo; onBack: () => void }) {
+function TrimForm({
+  info,
+  onBack,
+  onDownloadAnother,
+}: {
+  info: VideoInfo;
+  onBack: () => void;
+  onDownloadAnother: () => void;
+}) {
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isDone, setIsDone] = useState(false);
   const [progress, setProgress] = useState(0);
-  const { pop } = useNavigation();
+  const [selectedFormat, setSelectedFormat] = useState("video");
 
   const dur = info.duration;
   const durStr = formatDuration(dur);
@@ -37,11 +48,11 @@ function TrimForm({ info, onBack }: { info: VideoInfo; onBack: () => void }) {
     startTime: string;
     endTime: string;
     format: string;
+    quality?: string;
   }) {
     const startSecs = parseTimeToSeconds(values.startTime);
     const endSecs = parseTimeToSeconds(values.endTime);
 
-    // Validate
     if (startSecs !== null && endSecs !== null && startSecs >= endSecs) {
       await showToast({
         style: Toast.Style.Failure,
@@ -61,12 +72,13 @@ function TrimForm({ info, onBack }: { info: VideoInfo; onBack: () => void }) {
     });
 
     try {
-      const filePath = await downloadVideo({
+      await downloadVideo({
         url: info.url,
         startTime: values.startTime || undefined,
         endTime: values.endTime || undefined,
         format: values.format as "video" | "audio",
-        onProgress: (pct, line) => {
+        quality: values.quality,
+        onProgress: (pct) => {
           setProgress(pct);
           toast.message = `${pct}% — ${info.title.slice(0, 40)}`;
         },
@@ -76,8 +88,7 @@ function TrimForm({ info, onBack }: { info: VideoInfo; onBack: () => void }) {
       toast.title = "Download complete!";
       toast.message = "Saved to ~/Downloads/clipity/";
 
-      await showHUD("✓ Downloaded to ~/Downloads/clipity/");
-      pop();
+      setIsDone(true);
     } catch (e) {
       toast.style = Toast.Style.Failure;
       toast.title = "Download failed";
@@ -93,47 +104,85 @@ function TrimForm({ info, onBack }: { info: VideoInfo; onBack: () => void }) {
       isLoading={isDownloading}
       actions={
         <ActionPanel>
-          <Action.SubmitForm
-            title={isDownloading ? `Downloading… ${progress}%` : "Download"}
-            icon={Icon.Download}
-            onSubmit={handleSubmit}
-          />
-          <Action
-            title="Back"
-            icon={Icon.ArrowLeft}
-            onAction={onBack}
-            shortcut={{ modifiers: ["cmd"], key: "backspace" }}
-          />
+          {isDone ? (
+            <>
+              <Action
+                title="Download Another"
+                icon={Icon.Plus}
+                onAction={onDownloadAnother}
+              />
+              <Action
+                title="Open Downloads Folder"
+                icon={Icon.Folder}
+                onAction={() => open(DOWNLOADS_DIR)}
+                shortcut={{ modifiers: ["cmd"], key: "o" }}
+              />
+            </>
+          ) : (
+            <>
+              <Action.SubmitForm
+                title={isDownloading ? `Downloading… ${progress}%` : "Download"}
+                icon={Icon.Download}
+                onSubmit={handleSubmit}
+              />
+              <Action
+                title="Back"
+                icon={Icon.ArrowLeft}
+                onAction={onBack}
+                shortcut={{ modifiers: ["cmd"], key: "backspace" }}
+              />
+            </>
+          )}
         </ActionPanel>
       }
     >
-      <Form.Description
-        title="Video"
-        text={`${info.title}\n${info.uploader ? info.uploader + " · " : ""}${durStr}`}
-      />
+      {isDone ? (
+        <Form.Description
+          title="✓ Download complete"
+          text={`Saved to ~/Downloads/clipity/\n\nPress ↵ to download another, or ⌘O to open the downloads folder.`}
+        />
+      ) : (
+        <>
+          <Form.Description
+            title="Video"
+            text={`${info.title}\n${info.uploader ? info.uploader + " · " : ""}${durStr}`}
+          />
 
-      <Form.Separator />
+          <Form.Separator />
 
-      <Form.TextField
-        id="startTime"
-        title="Start time"
-        placeholder="00:00 (beginning)"
-        info={`Leave blank to start from the beginning. Format: mm:ss or hh:mm:ss. Total duration: ${durStr}`}
-      />
+          <Form.TextField
+            id="startTime"
+            title="Start time"
+            placeholder="00:00 (beginning)"
+            info={`Leave blank to start from the beginning. Format: mm:ss or hh:mm:ss. Total duration: ${durStr}`}
+          />
 
-      <Form.TextField
-        id="endTime"
-        title="End time"
-        placeholder={`${durStr} (end)`}
-        info="Leave blank to download to the end of the video."
-      />
+          <Form.TextField
+            id="endTime"
+            title="End time"
+            placeholder={`${durStr} (end)`}
+            info="Leave blank to download to the end of the video."
+          />
 
-      <Form.Separator />
+          <Form.Separator />
 
-      <Form.Dropdown id="format" title="Format" defaultValue="video">
-        <Form.Dropdown.Item value="video" title="Video — MP4" icon="🎬" />
-        <Form.Dropdown.Item value="audio" title="Audio only — MP3" icon="🎵" />
-      </Form.Dropdown>
+          <Form.Dropdown id="format" title="Format" defaultValue="video" onChange={setSelectedFormat}>
+            <Form.Dropdown.Item value="video" title="Video — MP4" icon="🎬" />
+            <Form.Dropdown.Item value="audio" title="Audio only — MP3" icon="🎵" />
+          </Form.Dropdown>
+
+          {selectedFormat === "video" && (
+            <Form.Dropdown id="quality" title="Quality" defaultValue="best">
+              <Form.Dropdown.Item value="best" title="Best available" icon="⭐" />
+              <Form.Dropdown.Item value="2160" title="4K — 2160p" icon="🎥" />
+              <Form.Dropdown.Item value="1080" title="1080p HD" icon="🎥" />
+              <Form.Dropdown.Item value="720" title="720p HD" icon="📹" />
+              <Form.Dropdown.Item value="480" title="480p" icon="📹" />
+              <Form.Dropdown.Item value="360" title="360p" icon="📹" />
+            </Form.Dropdown>
+          )}
+        </>
+      )}
     </Form>
   );
 }
@@ -187,6 +236,11 @@ export default function Download() {
           info={info}
           onBack={() => {
             setVideoInfo(null);
+            pop();
+          }}
+          onDownloadAnother={() => {
+            setVideoInfo(null);
+            setSearchText("");
             pop();
           }}
         />

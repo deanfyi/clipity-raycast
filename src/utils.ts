@@ -128,6 +128,7 @@ export interface DownloadOptions {
   startTime?: string;
   endTime?: string;
   format: "video" | "audio";
+  quality?: string;
   onProgress: (pct: number, line: string) => void;
 }
 
@@ -152,8 +153,9 @@ export async function downloadVideo(opts: DownloadOptions): Promise<string> {
   if (opts.format === "audio") {
     args.push("-x", "--audio-format", "mp3", "--audio-quality", "0");
   } else {
+    const h = opts.quality && opts.quality !== "best" ? `[height<=${opts.quality}]` : "";
     args.push(
-      "-f", "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
+      "-f", `bestvideo${h}[ext=mp4]+bestaudio[ext=m4a]/best${h}[ext=mp4]/best`,
       "--merge-output-format", "mp4"
     );
   }
