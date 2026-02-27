@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "Trim & download videos from any URL",
   "icon": "icon.png",
-  "author": "Dean",
+  "author": "deanfyi",
   "license": "MIT",
   "categories": ["Media", "Productivity"],
   "commands": [
